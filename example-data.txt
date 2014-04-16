@@ -1,0 +1,21 @@
+0 Prompted at: 1397446806775 index.html:163
+ Selected at: 1397446813101 index.html:280
+1 Prompted at: 1397446813107 index.html:163
+ Selected at: 1397446815804 index.html:280
+2 Prompted at: 1397446815808 index.html:163
+ Selected at: 1397446818302 index.html:280
+3 Prompted at: 1397446818307 index.html:163
+ Selected at: 1397446820831 index.html:280
+4 Prompted at: 1397446820835 index.html:163
+ Selected at: 1397446823631 index.html:280
+
+0 Prompted at: 1397446824650 index.html:240
+ Selected at: 1397446827529 index.html:280
+1 Prompted at: 1397446827624 index.html:240
+ Selected at: 1397446831134 index.html:280
+2 Prompted at: 1397446831217 index.html:240
+ Selected at: 1397446833775 index.html:280
+3 Prompted at: 1397446833854 index.html:240
+ Selected at: 1397446836477 index.html:280
+4 Prompted at: 1397446836525 index.html:240
+ Selected at: 1397446839618 

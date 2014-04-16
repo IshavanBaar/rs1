@@ -1,0 +1,45 @@
+body {
+	font-size: 12px;
+}
+
+ul {
+	width: 120px;
+	display: block;
+}
+
+.container {
+	padding: 20px;
+}
+
+.menu {
+	display: block;
+	float: left;
+	width: 150px;
+}
+
+.task {
+	display: block;
+	height: 50px;
+	font-size: 20px;
+}
+
+.user-questions {
+	font-size: 30px;
+}
+
+#menu1 {
+	display: none;
+}
+
+#menu2 {
+	display: none;
+}
+
+#menu3 {
+	display: none;
+}
+
+li a {
+	display: block;
+	cursor: pointer;
+}
