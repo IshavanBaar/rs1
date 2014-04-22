@@ -23,8 +23,7 @@
     var current_item = -1;
     var menu_experiment; 
     var is_ephemeral = false;
-    var SEQ_LENGTH = 5;
-    var log = [];
+    var SEQ_LENGTH = 2;
 
     // Creates HTML for pre questionnaire.
     function pre_questionnaire() {
@@ -158,7 +157,7 @@
             
             this.random_sequences = generate_sequence();
             this.tasks = generate_tasks(this.random_sequences);
-            this.next();
+            //this.next();
         }
 
         this.has_tasks = function() {
@@ -175,11 +174,9 @@
 
                 $("#menu-selection").html(current_menu+1);
                 $("#task-selection").html(this.menus[current_menu][current_item]);
+                console.log(this.current_index + " Prompted at: " + $.now());
 
                 this.current_index++;
-
-                log.push([$.now(), this.current_index, "Prompt"]);
-                console.log(this.current_index + " Prompted at: " + $.now());
             } else {
                 $(".container").hide();
                 $(".user-questions").show();
@@ -187,15 +184,9 @@
                 $(".button").button();  
 
                 $("#continue").click(function (event, ui) {
-                    //$(".container").show();
-                    $(".user-questions").html("<iframe src='practice_experiment.html'></iframe><div class='button' id='begin_experiment'>Next</div>");
-                    $(".button").button();
-
-                    $("#begin_experiment").click(function (event, ui) {
-                        $(".container").show();
-                        $(".user-questions").hide();
-                        menu_experiment.run();
-                    });
+                    $(".container").show();
+                    $(".user-questions").hide();
+                    menu_experiment.run();
                 });
             }
         }
@@ -315,40 +306,17 @@
                 var adaptive_selections = this.generate_adaptive();
 
                 this.set_adaptive(adaptive_selections);
+                console.log(this.current_index + " Prompted at: " + $.now());
 
                 this.current_index++;
                 this.last_selections[current_menu] = current_item;
-
-                log.push([$.now(), this.current_index, "Prompt"]);
-                console.log(this.current_index + " Prompted at: " + $.now());
             } else {
                 // Fill in functionality at end of ephemeral experiment.
-                this.post_questionnaire();
+                var message = "Practice period complete. Please click the next button at the bottom of the page to begin the experiment with condition #2.";
+                $(".container").hide();
+                $(".user-questions").html(message);
 
             }
-        }
-
-        this.post_questionnaire = function() {
-            $(".container").hide();
-            var form = "<h2>Thank you for taking the time to perform my experiment! The post-questionnaire below is the last thing you will need to fill out.</h2><iframe src='https://docs.google.com/forms/d/1AMrMT3--N6NsMWUdJh_Dp1QcytJtEBle_0Wf9sPsHUg/viewform?embedded=true' width='760' height='500' frameborder='0' marginheight='0' marginwidth='0'>Loading...</iframe><div class='button' id='download'>Data</div>";
-
-            $(".user-questions").html(form);
-            $(".user-questions").show();
-            $(".button").button(); 
-            $("#download").attr("download", "data.csv");
-            $("#download").click(function (event, ui) {
-                var csvContent = "data:text/csv;charset=utf-8,";
-                log.forEach(function(infoArray){
-                   csvContent += infoArray.join(",") + "\n";
-                });
-                var encodedUri = encodeURI(csvContent);
-                var link = document.createElement("a");
-                link.setAttribute("href", encodedUri);
-                link.setAttribute("download", "my_data.csv");
-
-                link.click();
-                console.log(log);
-            });         
         }
     }
 
@@ -360,6 +328,9 @@
 
         var permuted_tasks = permute_tasks(control_experiment.tasks, control_experiment.menus);
         menu_experiment = new Experiment(permuted_tasks, control_experiment.menus, control_experiment.random_sequences);
+
+
+        menu_experiment.run();
 
 
         $("#next").click(function (event, ui) {
@@ -374,13 +345,6 @@
         // Menu functionality setup
         $(".dropdown").menu({
             select: function(event, ui) {
-
-                if (is_ephemeral) {
-                    log.push([event.timeStamp, menu_experiment.current_index, "Item"]);
-                } else {
-                    log.push([event.timeStamp, control_experiment.current_index, "Item"]);
-                }
-
                 if (ui.item.text() == control_experiment.menus[current_menu][current_item]) {
                     console.log(" Selected at: " + event.timeStamp);
                     if (is_ephemeral) {
@@ -388,8 +352,9 @@
                     } else {
                         control_experiment.next();
                     }
+                } else {
+                    console.log("Incorrectly selected at: " + event.timeStamp);
                 }
-
                 $(this).hide();
             }
         });
@@ -398,14 +363,7 @@
 
         // Functionality on hover for dropdown Menu Button 1
         $(".menubutton1").hover(function() {
-            if (is_ephemeral) {
-                log.push([$.now(), menu_experiment.current_index, "Menu"]);
-            } else {
-                log.push([$.now(), control_experiment.current_index, "Menu"]);
-            }
-
             console.log("Menu1 at: "+ $.now());
-
             $("#menu1").show();
 
             // Checks if ephemeral menu, then fades items marked.
@@ -421,14 +379,7 @@
 
         // Functionality on hover for dropdown Menu Button 2
         $(".menubutton2").hover(function() {
-            if (is_ephemeral) {
-                log.push([$.now(), menu_experiment.current_index, "Menu"]);
-            } else {
-                log.push([$.now(), control_experiment.current_index, "Menu"]);
-            }
-
             console.log("Menu2 at: " + $.now());
-
             $("#menu2").show();
 
             // Checks if ephemeral menu, then fades items marked.
@@ -444,14 +395,7 @@
 
         // Functionality on hover for dropdown Menu Button 3
         $(".menubutton3").hover(function() {
-            if (is_ephemeral) {
-                log.push([$.now(), menu_experiment.current_index, "Menu"]);
-            } else {
-                log.push([$.now(), control_experiment.current_index, "Menu"]);
-            }
-
             console.log("Menu3 at: " + $.now());
-
             $("#menu3").show();
 
             // Checks if ephemeral menu, then fades items marked.

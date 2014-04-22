@@ -7,6 +7,11 @@ ul {
 	display: block;
 }
 
+iframe {
+	width: 800px;
+	height: 600px;
+}
+
 .container {
 	padding: 20px;
 }
@@ -24,7 +29,8 @@ ul {
 }
 
 .user-questions {
-	font-size: 30px;
+	font-family: sans-serif;
+	font-size: 20px;
 }
 
 #menu1 {

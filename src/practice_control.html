@@ -23,15 +23,13 @@
     var current_item = -1;
     var menu_experiment; 
     var is_ephemeral = false;
-    var SEQ_LENGTH = 5;
-    var log = [];
+    var SEQ_LENGTH = 8;
 
-    // Creates HTML for pre questionnaire.
-    function pre_questionnaire() {
+     var pre_questionnaire = function () {
         $(".container").hide();
-        var form = "<iframe src='https://docs.google.com/forms/d/1uQWXZ37Yh_ZlCy_rEnvCys5ejy2tgHdQLqDpUOY_Fq8/viewform?embedded=true' width='760' height='500' frameborder='0' marginheight='0' marginwidth='0'>Loading...</iframe><br><br><div class='button' id='next'>Next</div>"
+        var welcome = "<h2>Thank you for taking the time to participate in this experiment! Throughout this experiment, you will be presented with 2 different menu conditions and asked to perform a set of trial tasks. You will also be given a practice period before each condition. Continue to complete the pre-questionnaire.</h2><div class='button' id='questionnaire'>Next</div>";
 
-        $(".user-questions").html(form);
+        $(".user-questions").html(welcome);
         $(".button").button();
     }
 
@@ -131,40 +129,21 @@
         return shuffleArray(tasks);
     }
 
-    function permute_tasks(tasks) {
-        permuted_tasks = [];
-        for (var i=0; i<tasks.length; i++) {
-            var new_task = [(tasks[i][0] + 1)%3, tasks[i][1]];
-            permuted_tasks.push(new_task);
-        }
-        return permuted_tasks;
-    }
-
-    function ControlExperiment(is_practice) {
-        this.practice = is_practice;
-        //this.practice_menus;
-        //this.practice_tasks;
+    function ControlExperiment() {
         this.menus;
         this.tasks;
         this.random_sequences;
         this.current_index = 0;
 
         this.run = function () {
-            // Generate practice and real run
-            //var practice_groups = select_random(12, 72);
-            //this.practice_menus = populate_menus(practice_groups);
             var groups = select_random(12, 72);
             this.menus = populate_menus(groups);
-            
             this.random_sequences = generate_sequence();
             this.tasks = generate_tasks(this.random_sequences);
             this.next();
         }
 
         this.has_tasks = function() {
-            if (is_practice) {
-                return this.current_index != 8;
-            }
             return this.current_index != SEQ_LENGTH;
         }
 
@@ -175,212 +154,56 @@
 
                 $("#menu-selection").html(current_menu+1);
                 $("#task-selection").html(this.menus[current_menu][current_item]);
+                console.log(this.current_index + " Prompted at: " + $.now());
 
                 this.current_index++;
-
-                log.push([$.now(), this.current_index, "Prompt"]);
-                console.log(this.current_index + " Prompted at: " + $.now());
             } else {
                 $(".container").hide();
                 $(".user-questions").show();
-                $(".user-questions").html("<h2>We are now moving onto Condition #2. Again, you will be presented with 8 practice trials first. Press next to begin the practice period.</h2><div class='button' id='continue'>Next</div>");
+                $(".user-questions").html("<h1>We will now begin the experiment using Condition #1. When ready, press next to begin.</h1><div class='button' id='continue'>Next</div>");
                 $(".button").button();  
 
                 $("#continue").click(function (event, ui) {
+                    window.location.href = "index.html";
                     //$(".container").show();
-                    $(".user-questions").html("<iframe src='practice_experiment.html'></iframe><div class='button' id='begin_experiment'>Next</div>");
-                    $(".button").button();
-
-                    $("#begin_experiment").click(function (event, ui) {
-                        $(".container").show();
-                        $(".user-questions").hide();
-                        menu_experiment.run();
-                    });
+                    //$(".user-questions").hide();
+                    //menu_experiment.run();
                 });
             }
         }
 
-    }
-
-    function Experiment(tasks, menus, random_sequences) {
-        this.choices;
-        this.last_selections;
-        this.tasks = tasks;
-        this.menus = menus;
-        this.random_sequences = random_sequences;
-        this.current_index = 0;
-
-        this.run = function() {
-            this.init_adaptive();
-            this.next();
-        }
-
-        // Resets all tems back to fading.
-        this.set_ephemeral = function() {
-            is_ephemeral = true;
-
-            for (var i=0; i<3; i++) {
-                for (var j=0; j<16; j++) {
-                    var id = "#m" + i + "i" + j;
-                    $(id).fadeTo(0, 0);
-                    $(id).attr("class", "item ui-menu-item");
-                }
-            }
-        }
-
-        // Initializes algorithm.
-        this.init_adaptive = function () {
-            var menu1_choices = this.random_sequences[0].slice(0, 3);
-            var menu2_choices = this.random_sequences[1].slice(0, 3);
-            var menu3_choices = this.random_sequences[2].slice(0, 3);
-            this.last_selections = [menu1_choices[0], menu2_choices[0], menu3_choices[0]];
-            this.choices = [menu1_choices, menu2_choices, menu3_choices];
-        }
-
-        // Checks if most recently selected is among top 2 most frequently selected.
-        this.has_overlap = function (index) {
-            if ((this.last_selections[index]==this.choices[index][0])||(this.last_selections[index]==this.choices[index][1])) {
-                return true;
-            }
-            return false;
-        }
-
-        // Determines which 3 items are not faded in.
-        this.generate_adaptive = function () {
-            var selections = [];
-            for (var i=0; i<3; i++) {
-                var new_set = this.choices[i];
-                if (!this.has_overlap(i)) {
-                    new_set = [this.choices[i][0], this.choices[i][1], this.last_selections[i]];
-                }
-
-                if (i == current_menu) {
-                    if (!this.is_correct(new_set)) {
-                        new_set = this.randomly_fix(new_set);
-                    }
-                }
-
-                selections.push(new_set);
-            }
-
-            return selections;
-
-        }
-
-        // Check if adaptive algorithm is incorrect.
-        this.is_correct = function(new_set) {
-            for (var j=0; j<3; j++) {
-                if (new_set[j] == current_item) {
-                    return true;
-                }
-            } 
-            return false;
-        }
-
-
-        // Gives selected menu items fixed-no fading property.
-        this.set_adaptive = function(selections) {
-            for (var i=0; i<3; i++) {
-                for (var j=0; j<3; j++) {
-                    var id = "#m" + i + "i" + selections[i][j].toString();
-                    $(id).attr("class", "selected ui-menu-item");
-                    $(id).fadeTo(0, 1);
-                }
-            }
-        }
-
-        this.randomly_fix = function (selections) {
-            var prob_incorrect = 1 - 0.645;
-            var prob_correction = 18/(prob_incorrect*126);
-            var coin_flip = Math.random();
-            if (coin_flip < prob_correction) {
-                selections[Math.round(Math.random())] = current_item;
-            }
-            return selections;
-        }
-
-        this.has_tasks = function() {
-            //return this.current_index != 126;
-            return this.current_index != SEQ_LENGTH;
-        }
-
-        this.next = function() {
-            if (this.has_tasks()) {
-                current_menu = this.tasks[this.current_index][0];
-                current_item = this.tasks[this.current_index][1];
-
-                $("#menu-selection").html(current_menu+1);
-                $("#task-selection").html(this.menus[current_menu][current_item]);
-                this.set_ephemeral();
-                var adaptive_selections = this.generate_adaptive();
-
-                this.set_adaptive(adaptive_selections);
-
-                this.current_index++;
-                this.last_selections[current_menu] = current_item;
-
-                log.push([$.now(), this.current_index, "Prompt"]);
-                console.log(this.current_index + " Prompted at: " + $.now());
-            } else {
-                // Fill in functionality at end of ephemeral experiment.
-                this.post_questionnaire();
-
-            }
-        }
-
-        this.post_questionnaire = function() {
-            $(".container").hide();
-            var form = "<h2>Thank you for taking the time to perform my experiment! The post-questionnaire below is the last thing you will need to fill out.</h2><iframe src='https://docs.google.com/forms/d/1AMrMT3--N6NsMWUdJh_Dp1QcytJtEBle_0Wf9sPsHUg/viewform?embedded=true' width='760' height='500' frameborder='0' marginheight='0' marginwidth='0'>Loading...</iframe><div class='button' id='download'>Data</div>";
-
-            $(".user-questions").html(form);
-            $(".user-questions").show();
-            $(".button").button(); 
-            $("#download").attr("download", "data.csv");
-            $("#download").click(function (event, ui) {
-                var csvContent = "data:text/csv;charset=utf-8,";
-                log.forEach(function(infoArray){
-                   csvContent += infoArray.join(",") + "\n";
-                });
-                var encodedUri = encodeURI(csvContent);
-                var link = document.createElement("a");
-                link.setAttribute("href", encodedUri);
-                link.setAttribute("download", "my_data.csv");
-
-                link.click();
-                console.log(log);
-            });         
-        }
     }
 
 
     $(document).ready(function() {
-        var control_experiment = new ControlExperiment(false);
+        pre_questionnaire();
+        var control_experiment = new ControlExperiment();
+        // For testing purposes
         control_experiment.run();
 
+        
+        $("#questionnaire").click(function (event, ui) {
+            var form = "<iframe src='https://docs.google.com/forms/d/1uQWXZ37Yh_ZlCy_rEnvCys5ejy2tgHdQLqDpUOY_Fq8/viewform?embedded=true' width='760' height='500' frameborder='0' marginheight='0' marginwidth='0'>Loading...</iframe><br><br><div class='button' id='next'>Next</div>";
 
-        var permuted_tasks = permute_tasks(control_experiment.tasks, control_experiment.menus);
-        menu_experiment = new Experiment(permuted_tasks, control_experiment.menus, control_experiment.random_sequences);
-
-
-        $("#next").click(function (event, ui) {
-            $(".user-questions").html("<h1>We will now begin with selections for Condition #1. We will begin with an 8-trial practice period before starting the experiment. Press next to begin the practice trial.</h1><div class='button' id='begin_experiment'>Next</div>");
+            $(".user-questions").html(form);
             $(".button").button();
-            $("#begin_experiment").click(function (event, ui) {
-                $(".container").show();
-                $(".user-questions").hide();
+
+            $("#next").click(function (event, ui) {
+                $(".user-questions").html("<h2>We will now begin with Condition #1. You will be given an 8 trial period as practice. Please press next to begin the practice trials.</h2><div class='button' id='begin_practice'>Next</div>");
+                $(".button").button();
+
+                $("#begin_practice").click(function (event, ui){
+                    $(".container").show();
+                    $(".user-questions").hide();
+                });
+
             });
-        })
+        });
+
 
         // Menu functionality setup
         $(".dropdown").menu({
             select: function(event, ui) {
-
-                if (is_ephemeral) {
-                    log.push([event.timeStamp, menu_experiment.current_index, "Item"]);
-                } else {
-                    log.push([event.timeStamp, control_experiment.current_index, "Item"]);
-                }
-
                 if (ui.item.text() == control_experiment.menus[current_menu][current_item]) {
                     console.log(" Selected at: " + event.timeStamp);
                     if (is_ephemeral) {
@@ -388,8 +211,9 @@
                     } else {
                         control_experiment.next();
                     }
+                } else {
+                    console.log("Incorrectly selected at: " + event.timeStamp);
                 }
-
                 $(this).hide();
             }
         });
@@ -398,14 +222,6 @@
 
         // Functionality on hover for dropdown Menu Button 1
         $(".menubutton1").hover(function() {
-            if (is_ephemeral) {
-                log.push([$.now(), menu_experiment.current_index, "Menu"]);
-            } else {
-                log.push([$.now(), control_experiment.current_index, "Menu"]);
-            }
-
-            console.log("Menu1 at: "+ $.now());
-
             $("#menu1").show();
 
             // Checks if ephemeral menu, then fades items marked.
@@ -421,14 +237,6 @@
 
         // Functionality on hover for dropdown Menu Button 2
         $(".menubutton2").hover(function() {
-            if (is_ephemeral) {
-                log.push([$.now(), menu_experiment.current_index, "Menu"]);
-            } else {
-                log.push([$.now(), control_experiment.current_index, "Menu"]);
-            }
-
-            console.log("Menu2 at: " + $.now());
-
             $("#menu2").show();
 
             // Checks if ephemeral menu, then fades items marked.
@@ -444,14 +252,6 @@
 
         // Functionality on hover for dropdown Menu Button 3
         $(".menubutton3").hover(function() {
-            if (is_ephemeral) {
-                log.push([$.now(), menu_experiment.current_index, "Menu"]);
-            } else {
-                log.push([$.now(), control_experiment.current_index, "Menu"]);
-            }
-
-            console.log("Menu3 at: " + $.now());
-
             $("#menu3").show();
 
             // Checks if ephemeral menu, then fades items marked.

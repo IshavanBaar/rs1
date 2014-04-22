@@ -24,16 +24,6 @@
     var menu_experiment; 
     var is_ephemeral = false;
     var SEQ_LENGTH = 5;
-    var log = [];
-
-    // Creates HTML for pre questionnaire.
-    function pre_questionnaire() {
-        $(".container").hide();
-        var form = "<iframe src='https://docs.google.com/forms/d/1uQWXZ37Yh_ZlCy_rEnvCys5ejy2tgHdQLqDpUOY_Fq8/viewform?embedded=true' width='760' height='500' frameborder='0' marginheight='0' marginwidth='0'>Loading...</iframe><br><br><div class='button' id='next'>Next</div>"
-
-        $(".user-questions").html(form);
-        $(".button").button();
-    }
 
     /**
     * Randomize array element order in-place.
@@ -140,31 +130,28 @@
         return permuted_tasks;
     }
 
-    function ControlExperiment(is_practice) {
-        this.practice = is_practice;
-        //this.practice_menus;
-        //this.practice_tasks;
+    function ControlExperiment() {
         this.menus;
         this.tasks;
         this.random_sequences;
         this.current_index = 0;
+        this.pre_questionnaire = function () {
+          $(".container").hide();
+          var form = "<iframe src='https://docs.google.com/forms/d/1uQWXZ37Yh_ZlCy_rEnvCys5ejy2tgHdQLqDpUOY_Fq8/viewform?embedded=true' width='760' height='500' frameborder='0' marginheight='0' marginwidth='0'>Loading...</iframe><br><br><div class='button' id='next'>Next</div>"
+
+          $(".user-questions").html(form);
+          $(".button").button();
+        }
 
         this.run = function () {
-            // Generate practice and real run
-            //var practice_groups = select_random(12, 72);
-            //this.practice_menus = populate_menus(practice_groups);
             var groups = select_random(12, 72);
             this.menus = populate_menus(groups);
-            
             this.random_sequences = generate_sequence();
             this.tasks = generate_tasks(this.random_sequences);
             this.next();
         }
 
         this.has_tasks = function() {
-            if (is_practice) {
-                return this.current_index != 8;
-            }
             return this.current_index != SEQ_LENGTH;
         }
 
@@ -175,27 +162,19 @@
 
                 $("#menu-selection").html(current_menu+1);
                 $("#task-selection").html(this.menus[current_menu][current_item]);
+                console.log(this.current_index + " Prompted at: " + $.now());
 
                 this.current_index++;
-
-                log.push([$.now(), this.current_index, "Prompt"]);
-                console.log(this.current_index + " Prompted at: " + $.now());
             } else {
                 $(".container").hide();
                 $(".user-questions").show();
-                $(".user-questions").html("<h2>We are now moving onto Condition #2. Again, you will be presented with 8 practice trials first. Press next to begin the practice period.</h2><div class='button' id='continue'>Next</div>");
+                $(".user-questions").html("<h1>We are now moving onto Condition #2. Press next to continue.</h1><div class='button' id='continue'>Next</div>");
                 $(".button").button();  
 
                 $("#continue").click(function (event, ui) {
-                    //$(".container").show();
-                    $(".user-questions").html("<iframe src='practice_experiment.html'></iframe><div class='button' id='begin_experiment'>Next</div>");
-                    $(".button").button();
-
-                    $("#begin_experiment").click(function (event, ui) {
-                        $(".container").show();
-                        $(".user-questions").hide();
-                        menu_experiment.run();
-                    });
+                    $(".container").show();
+                    $(".user-questions").hide();
+                    menu_experiment.run();
                 });
             }
         }
@@ -291,6 +270,7 @@
 
         this.randomly_fix = function (selections) {
             var prob_incorrect = 1 - 0.645;
+            // var prob_correction = 18/(prob_incorrect*SEQ_LENGTH);
             var prob_correction = 18/(prob_incorrect*126);
             var coin_flip = Math.random();
             if (coin_flip < prob_correction) {
@@ -315,12 +295,10 @@
                 var adaptive_selections = this.generate_adaptive();
 
                 this.set_adaptive(adaptive_selections);
+                console.log(this.current_index + " Prompted at: " + $.now());
 
                 this.current_index++;
                 this.last_selections[current_menu] = current_item;
-
-                log.push([$.now(), this.current_index, "Prompt"]);
-                console.log(this.current_index + " Prompted at: " + $.now());
             } else {
                 // Fill in functionality at end of ephemeral experiment.
                 this.post_questionnaire();
@@ -330,57 +308,32 @@
 
         this.post_questionnaire = function() {
             $(".container").hide();
-            var form = "<h2>Thank you for taking the time to perform my experiment! The post-questionnaire below is the last thing you will need to fill out.</h2><iframe src='https://docs.google.com/forms/d/1AMrMT3--N6NsMWUdJh_Dp1QcytJtEBle_0Wf9sPsHUg/viewform?embedded=true' width='760' height='500' frameborder='0' marginheight='0' marginwidth='0'>Loading...</iframe><div class='button' id='download'>Data</div>";
+            var form = "<iframe src='https://docs.google.com/forms/d/1AMrMT3--N6NsMWUdJh_Dp1QcytJtEBle_0Wf9sPsHUg/viewform?embedded=true' width='760' height='500' frameborder='0' marginheight='0' marginwidth='0'>Loading...</iframe>";
 
             $(".user-questions").html(form);
             $(".user-questions").show();
-            $(".button").button(); 
-            $("#download").attr("download", "data.csv");
-            $("#download").click(function (event, ui) {
-                var csvContent = "data:text/csv;charset=utf-8,";
-                log.forEach(function(infoArray){
-                   csvContent += infoArray.join(",") + "\n";
-                });
-                var encodedUri = encodeURI(csvContent);
-                var link = document.createElement("a");
-                link.setAttribute("href", encodedUri);
-                link.setAttribute("download", "my_data.csv");
-
-                link.click();
-                console.log(log);
-            });         
+            $(".button").button();           
         }
     }
 
 
     $(document).ready(function() {
-        var control_experiment = new ControlExperiment(false);
+        var control_experiment = new ControlExperiment();
+        control_experiment.pre_questionnaire();
+        // For testing purposes
         control_experiment.run();
-
 
         var permuted_tasks = permute_tasks(control_experiment.tasks, control_experiment.menus);
         menu_experiment = new Experiment(permuted_tasks, control_experiment.menus, control_experiment.random_sequences);
 
-
         $("#next").click(function (event, ui) {
-            $(".user-questions").html("<h1>We will now begin with selections for Condition #1. We will begin with an 8-trial practice period before starting the experiment. Press next to begin the practice trial.</h1><div class='button' id='begin_experiment'>Next</div>");
-            $(".button").button();
-            $("#begin_experiment").click(function (event, ui) {
-                $(".container").show();
-                $(".user-questions").hide();
-            });
-        })
+            $(".container").show();
+            $(".user-questions").hide();
+        });
 
         // Menu functionality setup
         $(".dropdown").menu({
             select: function(event, ui) {
-
-                if (is_ephemeral) {
-                    log.push([event.timeStamp, menu_experiment.current_index, "Item"]);
-                } else {
-                    log.push([event.timeStamp, control_experiment.current_index, "Item"]);
-                }
-
                 if (ui.item.text() == control_experiment.menus[current_menu][current_item]) {
                     console.log(" Selected at: " + event.timeStamp);
                     if (is_ephemeral) {
@@ -388,8 +341,9 @@
                     } else {
                         control_experiment.next();
                     }
+                } else {
+                    console.log("Incorrectly selected at: " + event.timeStamp);
                 }
-
                 $(this).hide();
             }
         });
@@ -398,14 +352,6 @@
 
         // Functionality on hover for dropdown Menu Button 1
         $(".menubutton1").hover(function() {
-            if (is_ephemeral) {
-                log.push([$.now(), menu_experiment.current_index, "Menu"]);
-            } else {
-                log.push([$.now(), control_experiment.current_index, "Menu"]);
-            }
-
-            console.log("Menu1 at: "+ $.now());
-
             $("#menu1").show();
 
             // Checks if ephemeral menu, then fades items marked.
@@ -421,14 +367,6 @@
 
         // Functionality on hover for dropdown Menu Button 2
         $(".menubutton2").hover(function() {
-            if (is_ephemeral) {
-                log.push([$.now(), menu_experiment.current_index, "Menu"]);
-            } else {
-                log.push([$.now(), control_experiment.current_index, "Menu"]);
-            }
-
-            console.log("Menu2 at: " + $.now());
-
             $("#menu2").show();
 
             // Checks if ephemeral menu, then fades items marked.
@@ -444,14 +382,6 @@
 
         // Functionality on hover for dropdown Menu Button 3
         $(".menubutton3").hover(function() {
-            if (is_ephemeral) {
-                log.push([$.now(), menu_experiment.current_index, "Menu"]);
-            } else {
-                log.push([$.now(), control_experiment.current_index, "Menu"]);
-            }
-
-            console.log("Menu3 at: " + $.now());
-
             $("#menu3").show();
 
             // Checks if ephemeral menu, then fades items marked.
